@@ -57,29 +57,77 @@ def update_keys(pressed_buttons, packet, keyboard, mouse, config):
     i = 0
     while i < incoming.__len__():
         # we only need to make a change if the data aren't the same
-        if pressed[i] != incoming[i]:
+        if pressed[i] != incoming[i] and i != 7 and i != 8:
+            # we will drive the mouse separately; skip these
             if i == 7:
-                # get the old and new coordinates
-                old_x_coord = pressed[i]
-                new_x_coord = incoming[i]
-                # increment the index to get the y coordinate
                 i += 1
-                old_y_coord = pressed[i]
-                new_y_coord = incoming[i]
-
-                # we only want to change the position of the mouse if the coordinate switches quadrants
-                # otherwise, we want to change the *speed* at which we are driving it
+            elif i == 8:
+                pass
             else:
                 if pressed[i]:
                     keyboard.release(config[i])
                 else:
                     keyboard.press(config[i])
-        else:
-            # with joystick coordinates, we need to make sure we keep driving the mouse position if they remain the same
-            if i == 7 or i == 8:
-                pass
+       
         # increment the index
         i += 1
+    
+    # now, update the mouse
+    # get the old and new coordinates
+    old_x_coord = pressed[7]
+    new_x_coord = incoming[7]
+    old_y_coord = pressed[8]
+    new_y_coord = incoming[8]
+
+    # we only want to change the position of the mouse if the coordinate switches quadrants
+    # otherwise, we want to change the *speed* at which we are driving it
+    mouse_pos = mouse.position
+    
+    # if the joystick returned to its default position, stop mouse movement
+    if new_x_coord == 0 and new_y_coord == 0:
+        pass
+    else:
+        print(new_x_coord)
+        print(new_y_coord)
+        y_change = 0
+        x_change = 0
+
+        if new_x_coord == 0:
+            x_change = 0
+        else:
+            if 0 < new_x_coord <= 50:
+                x_change = 1
+            elif 50 < new_x_coord <= 100:
+                x_change = 5
+            elif 100 < new_x_coord < 127:
+                x_change = 7
+            elif 0 > new_x_coord >= -50:
+                x_change = -1
+            elif -50 > new_x_coord >= -100:
+                x_change = -5
+            elif -100 > new_x_coord >= -128:
+                x_change = -7
+
+        if new_y_coord == 0:
+            y_change = 0
+        else:
+            if 0 < new_y_coord <= 50:
+                y_change = 1
+            elif 50 < new_y_coord <= 100:
+                y_change = 5
+            elif 100 < new_y_coord < 127:
+                y_change = 7
+            elif 0 > new_y_coord >= -50:
+                y_change = -1
+            elif -50 > new_y_coord >= -100:
+                y_change = -5
+            elif -100 > new_y_coord >= -128:
+                y_change = -7
+            
+            # Since 0,0 is the top left corner, we need to invert the y axis
+            y_change = -y_change
+        
+        mouse.move(x_change, y_change)
 
 def main():
     # Create the mouse and keyboard
