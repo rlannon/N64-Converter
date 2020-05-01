@@ -33,8 +33,8 @@ class Buttons:
         self.d_down = bool(packet[4])
         self.d_left = bool(packet[5])
         self.d_right = bool(packet[6])
-        self.x_axis = int.from_bytes([packet[7]], byteorder="big", signed=True)
-        self.y_axis = int.from_bytes([packet[8]], byteorder="big", signed=True)
+        self.x_axis = int.from_bytes([packet[7]], byteorder="big", signed=True) if packet[7] is bytes else packet[7]
+        self.y_axis = int.from_bytes([packet[8]], byteorder="big", signed=True) if packet[8] is bytes else packet[8]
         self.a = bool(packet[9])
         self.b = bool(packet[10])
         self.c_up = bool(packet[11])
@@ -75,8 +75,8 @@ class SerialPacket:
         # todo: checksum stuff
         try:
             checksum = int.from_bytes([packet[16], packet[17]], byteorder="little")
-        except Exception as e:
-            print(e)
+        except:
+            print("Checksum error")
         
         self.buttons.update(packet)
     

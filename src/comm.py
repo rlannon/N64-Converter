@@ -48,73 +48,104 @@ def serial_ports():
             pass
     return result
 
-
-# Create the mouse and keyboard
-mouse = pynput.mouse.Controller()
-keyboard = pynput.keyboard.Controller()
-
-def update_keys(pressed_buttons, packet):
+def update_keys(pressed_buttons, packet, keyboard, mouse, config):
     """ Updates which keys are up/down and where the mouse position is
     """
-    data = list(packet)
+    incoming = list(packet)
     pressed = list(pressed_buttons)
-    
-    print(data)
-    print(pressed)
 
-    for i in range(data.__len__()):
+    i = 0
+    while i < incoming.__len__():
         # we only need to make a change if the data aren't the same
-        if pressed[i] != data[i]:
-            if pressed[i] is bool or (i != 8 and i != 7):
-                print("update key stroke")
+        if pressed[i] != incoming[i]:
+            if i == 7:
+                # get the old and new coordinates
+                old_x_coord = pressed[i]
+                new_x_coord = incoming[i]
+                # increment the index to get the y coordinate
+                i += 1
+                old_y_coord = pressed[i]
+                new_y_coord = incoming[i]
+
+                # we only want to change the position of the mouse if the coordinate switches quadrants
+                # otherwise, we want to change the *speed* at which we are driving it
             else:
-                print("update mouse")
+                if pressed[i]:
+                    keyboard.release(config[i])
+                else:
+                    keyboard.press(config[i])
+        else:
+            # with joystick coordinates, we need to make sure we keep driving the mouse position if they remain the same
+            if i == 7 or i == 8:
+                pass
+        # increment the index
+        i += 1
 
-# we must first connect to the Arduino via serial
-# view which connections are available
-all_ports = serial_ports()
+def main():
+    # Create the mouse and keyboard
+    mouse = pynput.mouse.Controller()
+    keyboard = pynput.keyboard.Controller()
 
-listed_ports = list(serial.tools.list_ports.comports())
-arduino_port = ""
+    # Create a default keyboard configuration, putting in 0 for mouse x and y (handled separately)
+    # todo: allow user to supply their own configurations?
+    default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
 
-for port in listed_ports:
-    if "Arduino" in port.__str__():
-        arduino_port = port.__str__()
-        break
+    # we must first connect to the Arduino via serial
+    # view which connections are available
+    all_ports = serial_ports()
 
-if arduino_port == "":
-    raise Exception("No Arduino detected")
+    listed_ports = list(serial.tools.list_ports.comports())
+    arduino_port = ""
 
-to_connect_name = ""
-for port in all_ports:
-    if port in arduino_port:
-        to_connect_name = port
+    for port in listed_ports:
+        if "Arduino" in port.__str__():
+            arduino_port = port.__str__()
+            break
 
-if to_connect_name == "":
-    raise Exception("Could not find port")
+    if arduino_port == "":
+        raise Exception("No Arduino detected")
 
-# connect to the serial port
-conn = serial.Serial(to_connect_name, 9600, timeout=3)
-if not conn.is_open:
-    conn.open()
+    to_connect_name = ""
+    for port in all_ports:
+        if port in arduino_port:
+            to_connect_name = port
 
-conn.reset_input_buffer();
-print("Connected.")
+    if to_connect_name == "":
+        raise Exception("Could not find port")
 
-# create the SerialPacket object
-packet = serial_packet.SerialPacket()
+    # connect to the serial port
+    conn = serial.Serial(to_connect_name, 9600, timeout=3)
+    if not conn.is_open:
+        conn.open()
 
-# create an object to store controller data
-pressed_buttons = serial_packet.Buttons()
+    
+    # create the SerialPacket object
+    packet = serial_packet.SerialPacket()
 
-while True:
-    # read whole objects one at a time -- ensure that we can read the entire object
-    if conn.in_waiting >= 18:
-        # get the packet
-        data = conn.readline(18);
-        print(data)
-        # packet.update(data)
+    # create an object to store controller data
+    pressed_buttons = serial_packet.Buttons()
 
-        # update the keystrokes and current button data
-        # update_keys(pressed_buttons, packet.buttons)
-        # pressed_buttons = packet.buttons
+    # Reset the input buffer
+    conn.reset_input_buffer();
+    print("Connected.")
+
+    # Our main loop
+    quit = False
+    while not quit:
+        try:
+            # read whole objects one at a time -- ensure that we can read the entire object
+            if conn.in_waiting >= 18:
+                # get the packet
+                data = conn.read(18);
+                packet.update(data)
+                
+                # update the keystrokes and current button data
+                update_keys(pressed_buttons, packet.buttons, keyboard, mouse, default_config)
+                pressed_buttons.update(list(packet.buttons))
+        except:
+            # When we get an exception, quit the program
+            print("Something went wrong; perhaps the adapter came unplugged?")
+            quit = True
+
+if __name__ == "__main__":
+    main()
