@@ -161,16 +161,29 @@ def main():
     num_cycles = 0
     while not quit:
         # read whole objects one at a time -- ensure that we can read the entire object
-        if conn.in_waiting >= 18:
+        if conn.in_waiting >= serial_packet.SerialPacket.size():
             # get the packet
-            data = conn.read(18);
-            packet.update(data)
-            
-            # update the keystrokes and current button data
-            update_keys(pressed_buttons, packet.buttons, default_config)
-            update_mouse(pressed_buttons, packet.buttons)
-            
-            pressed_buttons.update(list(packet.buttons))
+            data = conn.read(serial_packet.SerialPacket.size());
+
+            try:
+                # print(data)   # for debugging
+                packet.update(data)
+                
+                # update the keystrokes and current button data
+                update_keys(pressed_buttons, packet.buttons, default_config)
+                update_mouse(pressed_buttons, packet.buttons)
+                
+                pressed_buttons.update(list(packet.buttons))
+            except:
+                print("Invalid data; resetting input buffer")
+                fixed = False
+                while not fixed:
+                    # check for a magic number
+                    val = conn.read(serial_packet.SerialPacket.magic_number_size())
+                    if val == b'\x23\xC0':
+                        print("Data realigned")
+                        fixed = True
+                        val = conn.read(serial_packet.SerialPacket.size() - serial_packet.SerialPacket.magic_number_size())
 
 if __name__ == "__main__":
     main()

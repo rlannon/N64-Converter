@@ -68,18 +68,47 @@ class Buttons:
 
 
 class SerialPacket:
+    # Static members
+    MAGIC_NUMBER_LOW_INDEX = 0
+    MAGIC_NUMBER_HIGH_INDEX = 1
+    MAGIC_NUMBER_WIDTH = 2
+    DATA_BEGIN_INDEX = 2
+    CHECKSUM_HIGH_INDEX = 18
+    CHECKSUM_LOW_INDEX = 19
+    CHECKSUM_WIDTH = 2
+    PACKET_WIDTH = 20
+
     def __init__(self):
         self.data = Buttons()
     
     def update(self, packet):
-        # todo: checksum stuff
-        try:
-            checksum = int.from_bytes([packet[16], packet[17]], byteorder="little")
-        except:
-            print("Checksum error")
+        # get the header and checksum; make sure the data is usable
+        header = [packet[self.MAGIC_NUMBER_LOW_INDEX], packet[self.MAGIC_NUMBER_HIGH_INDEX]]
+        checksum = int.from_bytes([packet[self.CHECKSUM_HIGH_INDEX], packet[self.CHECKSUM_LOW_INDEX]], byteorder="little")
+
+        if header != [0x23, 0xC0]:
+            raise Exception("Invalid header")
         
-        self.buttons.update(packet)
+        data_sum = 0
+        for i in range(self.DATA_BEGIN_INDEX, len(packet) - self.CHECKSUM_WIDTH):
+            data_sum += 0 if packet[i] == 0 else 1
+        
+        if data_sum != checksum:
+            print("found: ", data_sum)
+            print("checksum: ", checksum)
+            raise Exception("Invalid checksum")
+
+        # update the packet
+        self.buttons.update(packet[self.DATA_BEGIN_INDEX:self.CHECKSUM_HIGH_INDEX])
     
     @property
     def buttons(self):
         return self.data
+
+    @staticmethod
+    def size():
+        return SerialPacket.PACKET_WIDTH
+    
+    @staticmethod
+    def magic_number_size():
+        return SerialPacket.MAGIC_NUMBER_WIDTH
