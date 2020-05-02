@@ -5,6 +5,7 @@
 
 N64Controller c(2);
 
+// a struct to contain packet data
 struct controller_packet {
   const char MAGIC_NUMBER_LOW = 0x23;
   const char MAGIC_NUMBER_HIGH = 0xC0;
@@ -59,8 +60,8 @@ void setup() {
 }
 
 void loop() {
-  // poll the controller
-  delay(30);
+  // poll the controller and fetch button presses
+  delay(30);  // the library currently requires the delay in the main loop
   c.update();
 
   // use the controller_packet struct to fetch and send data
@@ -68,6 +69,8 @@ void loop() {
 
   // write the data contained in our packet struct
   int len = Serial.write(packet.data, 20);
+
+  // verify that the bytes were sent
   if (len != 20) {
     // if there was an error, try to rectify it
     digitalWrite(WAIT_PIN, HIGH);

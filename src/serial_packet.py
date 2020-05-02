@@ -86,6 +86,8 @@ class SerialPacket:
         header = [packet[self.MAGIC_NUMBER_LOW_INDEX], packet[self.MAGIC_NUMBER_HIGH_INDEX]]
         checksum = int.from_bytes([packet[self.CHECKSUM_HIGH_INDEX], packet[self.CHECKSUM_LOW_INDEX]], byteorder="little")
 
+        # todo: turn the thrown headers into specific exception classes so they may be handled better
+
         if header != [0x23, 0xC0]:
             raise Exception("Invalid header")
         

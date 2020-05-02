@@ -65,10 +65,12 @@ def update_keys(pressed_buttons, packet, config):
                 pass
             else:
                 if pressed[i]:
+                    # print(config[i], ": RELEASE", sep="") # for debug
                     pydirectinput.keyUp(config[i])
                 else:
+                    # print(config[i], ": PRESS", sep="")   # for debug
                     pydirectinput.keyDown(config[i])
-           
+        
         # increment the index
         i += 1
 
@@ -165,25 +167,39 @@ def main():
             # get the packet
             data = conn.read(serial_packet.SerialPacket.size());
 
+            # update our packet information
             try:
                 # print(data)   # for debugging
                 packet.update(data)
-                
+            except Exception as e:
+                # If we encountered a data error, reset our input buffer
+                print("Invalid data (specific error was: " + e + "); resetting input buffer")
+                fixed = False
+                while not fixed:
+                    # check for a magic number, one byte at a time
+                    # reading one at a time prevents us from being stuck in a loop where weare one byte off
+                    
+                    # todo: this misalignment seems to be happening often...
+                    # # check for a better fix than just handling the error each time
+                    
+                    val = conn.read(1)
+                    if val == b'\x23':
+                        val = conn.read(1)
+                        if val == b'\xC0':
+                            print("Data realigned")
+                            fixed = True
+                            val = conn.read(serial_packet.SerialPacket.size() - serial_packet.SerialPacket.magic_number_size())
+            
+            # perform our updates
+            try:
                 # update the keystrokes and current button data
                 update_keys(pressed_buttons, packet.buttons, default_config)
                 update_mouse(pressed_buttons, packet.buttons)
                 
+                # update the list of currently pressed buttons
                 pressed_buttons.update(list(packet.buttons))
-            except:
-                print("Invalid data; resetting input buffer")
-                fixed = False
-                while not fixed:
-                    # check for a magic number
-                    val = conn.read(serial_packet.SerialPacket.magic_number_size())
-                    if val == b'\x23\xC0':
-                        print("Data realigned")
-                        fixed = True
-                        val = conn.read(serial_packet.SerialPacket.size() - serial_packet.SerialPacket.magic_number_size())
+            except Exception as e:
+                print("An error occurred when trying to drive the kbd/mouse: ", e)
 
 if __name__ == "__main__":
     main()
