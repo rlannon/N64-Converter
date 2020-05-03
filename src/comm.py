@@ -22,6 +22,9 @@ import win32api, win32con
 # custom modules
 import serial_packet
 
+# set pydirectinput's failsafe to false; we aren't using it to drive the mouse
+pydirectinput.FAILSAFE = False
+
 def serial_ports():
     """ Lists serial port names
 
@@ -51,7 +54,7 @@ def serial_ports():
     return result
 
 def update_keys(pressed_buttons, packet, config):
-    """ Updates which keys are up/down and where the mouse position is
+    """ Updates which keys are being pressed
     """
     incoming = list(packet)
     pressed = list(pressed_buttons)
@@ -173,7 +176,7 @@ def main():
                 packet.update(data)
             except Exception as e:
                 # If we encountered a data error, reset our input buffer
-                print("Invalid data (specific error was: " + e + "); resetting input buffer")
+                print("Invalid data (specific error was: ", e, "); resetting input buffer", sep="")
                 fixed = False
                 while not fixed:
                     # check for a magic number, one byte at a time
