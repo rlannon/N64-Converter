@@ -32,3 +32,11 @@ The N64 controller must be connected to the Arduino via +3.3V (**not** 5V, as th
      / O    O     O \
     | GND Data +3.3V |
     |________________|
+
+
+## Known Issues
+
+This project is far from perfect. While communicating with the host using serial might not necessarily be the *optimal* way to do things, it is the only way possible on the Arduino Uno (as it can't really act as an HID-compliant device, unless I'm mistaken -- in which case, let me know, please!). Some known issues at the time are:
+
+* The Arduino library does not currently wait to finish initialization until an N64 controller is connected; if none is plugged in to start, there is no guarantee it will work and a reset is required
+* Some button presses may not register, or may be finnicky, when utilizing the joystick at the same time. The only time I have run into this issue is playing TLoZ: Majora's Mask on Project64, but it has been a consistent problem in that game with the A button (but no others). I have not yet determined whether it is an issue with my controller, in the controller driver, or in the Python code
