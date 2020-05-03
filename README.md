@@ -33,7 +33,6 @@ The N64 controller must be connected to the Arduino via +3.3V (**not** 5V, as th
     | GND Data +3.3V |
     |________________|
 
-
 ## Known Issues
 
 This project is far from perfect. While communicating with the host using serial might not necessarily be the *optimal* way to do things, it is the only way possible on the Arduino Uno (as it can't really act as an HID-compliant device, unless I'm mistaken -- in which case, let me know, please!). Some known issues at the time are:

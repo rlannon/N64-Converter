@@ -14,6 +14,7 @@ import serial
 import serial.tools.list_ports
 import sys
 import glob
+import threading
 
 # win32 input modules
 import pydirectinput
@@ -50,6 +51,7 @@ def serial_ports():
             pass
     return result
 
+
 def update_keys(pressed_buttons, packet, config):
     """ Updates key presses
 
@@ -84,26 +86,17 @@ def update_keys(pressed_buttons, packet, config):
         # increment the index
         i += 1
 
-def update_mouse(pressed_buttons, packet):
-    """ Updates the mouse based on the current joystick position
+
+def update_mouse(incoming):
+    """ Updates the mouse based on the current joystick position, assuming the mouse input is to be buffered on Project64
     
-        :param pressed_buttons:
-            A Buttons object containing buttons currently pressed
-        
-        :param packet:
-            The packet of data (a Buttons object) we are handling
+        :param incoming:
+            The incoming data we are handling
     """
 
-    pressed = list(pressed_buttons)
-    incoming = list(packet)
-
-    # now, update the mouse
-    # get the old and new coordinates
-    old_x_coord = pressed[7]    # todo: we never use the old joystick coordinates -- it drives the mouse fine without them -- but should we?
     new_x_coord = incoming[7]
-    old_y_coord = pressed[8]    # todo: the old position is basically just the current mouse position, and since we use relative movement, old_pos is unnecessary
     new_y_coord = incoming[8]
-    
+
     # if the joystick returned to its default position (0,0), stop mouse movement
     if new_x_coord == 0 and new_y_coord == 0:
         pass
@@ -129,13 +122,14 @@ def update_mouse(pressed_buttons, packet):
         # use the win32api to move the mouse position with a direct input event
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, int(x_change), int(y_change))
 
+
 def main():
     """ The main function, containing the actual driver loop
     """
 
     # set pydirectinput's failsafe to false; we aren't using it to drive the mouse
     pydirectinput.FAILSAFE = False
-    
+
     # Create a default keyboard configuration, putting in 0 for mouse x and y (handled separately)
     # todo: allow user to supply their own configurations?
     default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
@@ -180,17 +174,32 @@ def main():
 
     # Our main loop
     quit = False
-    num_cycles = 0
+
+    # allow us to enable and disable the controller from updating with key combos
+    # for now, make it L+R+Z+D_DOWN, as that's a very unusual/uncomfortable position
+    # and make the re-enable the start button
+    enabled = True
+    
     while not quit:
+        # set up keyboard and mouse threads
+        kbd_thread = threading.Thread(target=update_keys, args=(pressed_buttons, packet.buttons, default_config))
+        mouse_thread = threading.Thread(target=update_mouse, args=(packet.buttons))
+
         # wait to read until we have enough data in the buffer (the size of one packet)
         if conn.in_waiting >= serial_packet.SerialPacket.size():
             # get the packet
             data = conn.read(serial_packet.SerialPacket.size());
-
+            
             # update our packet information
             try:
                 # print(data)   # for debugging
                 packet.update(data)
+                if enabled and (packet.buttons.l and packet.buttons.r and packet.buttons.z and packet.buttons.d_down):
+                    enabled = False
+                    print("Disabling")
+                elif (not enabled) and packet.buttons.start:
+                    enabled = True
+                    print("Enabling")
             except Exception as e:
                 # If we encountered a data error, reset our input buffer
                 print("An error was encountered when trying to data from the adapter; resetting the input buffer")
@@ -210,14 +219,25 @@ def main():
             
             # perform our updates
             try:
-                # update the keystrokes and current button data
-                update_keys(pressed_buttons, packet.buttons, default_config)
-                update_mouse(pressed_buttons, packet.buttons)
-                
-                # update the list of currently pressed buttons
-                pressed_buttons.update(list(packet.buttons))
+                # only perform updates if the controller is enabled
+                if enabled:
+                    # update the keystrokes and current button data
+                    # update_keys(pressed_buttons, packet.buttons, default_config)
+                    # update_mouse_absolute(zero_position, packet.buttons)
+                    
+                    # start the threads
+                    kbd_thread.start()
+                    mouse_thread.start()
+
+                    # wait for the threads to finish
+                    kbd_thread.join()
+                    mouse_thread.join()
+
+                    # update the list of currently pressed buttons
+                    pressed_buttons.update(list(packet.buttons))
             except Exception as e:
                 print("An error occurred when trying to drive the kbd/mouse: ", e)
+
 
 if __name__ == "__main__":
     main()
