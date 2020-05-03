@@ -22,9 +22,6 @@ import win32api, win32con
 # custom modules
 import serial_packet
 
-# set pydirectinput's failsafe to false; we aren't using it to drive the mouse
-pydirectinput.FAILSAFE = False
-
 def serial_ports():
     """ Lists serial port names
 
@@ -54,8 +51,18 @@ def serial_ports():
     return result
 
 def update_keys(pressed_buttons, packet, config):
-    """ Updates which keys are being pressed
+    """ Updates key presses
+
+        :param pressed_buttons:
+            The Buttons object containing currently pressed buttons (as of last controller update)
+        
+        :param packet:
+            The packet of data we are handling
+        
+        :param config:
+            The input configuration
     """
+
     incoming = list(packet)
     pressed = list(pressed_buttons)
 
@@ -78,21 +85,26 @@ def update_keys(pressed_buttons, packet, config):
         i += 1
 
 def update_mouse(pressed_buttons, packet):
+    """ Updates the mouse based on the current joystick position
+    
+        :param pressed_buttons:
+            A Buttons object containing buttons currently pressed
+        
+        :param packet:
+            The packet of data (a Buttons object) we are handling
+    """
+
     pressed = list(pressed_buttons)
     incoming = list(packet)
 
     # now, update the mouse
     # get the old and new coordinates
-    old_x_coord = pressed[7]
+    old_x_coord = pressed[7]    # todo: we never use the old joystick coordinates -- it drives the mouse fine without them -- but should we?
     new_x_coord = incoming[7]
-    old_y_coord = pressed[8]
+    old_y_coord = pressed[8]    # todo: the old position is basically just the current mouse position, and since we use relative movement, old_pos is unnecessary
     new_y_coord = incoming[8]
-
-    # we only want to change the position of the mouse if the coordinate switches quadrants
-    # otherwise, we want to change the *speed* at which we are driving it
-    mouse_pos = win32api.GetCursorPos()
     
-    # if the joystick returned to its default position, stop mouse movement
+    # if the joystick returned to its default position (0,0), stop mouse movement
     if new_x_coord == 0 and new_y_coord == 0:
         pass
     else:
@@ -114,10 +126,16 @@ def update_mouse(pressed_buttons, packet):
                 y_change = 1 if new_y_coord > 0 else -1
             y_change = -y_change
         
-        # todo: prevent the failsafe from triggering by resetting the pointer or by disabling the failsafe mechanism
+        # use the win32api to move the mouse position with a direct input event
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, int(x_change), int(y_change))
 
 def main():
+    """ The main function, containing the actual driver loop
+    """
+
+    # set pydirectinput's failsafe to false; we aren't using it to drive the mouse
+    pydirectinput.FAILSAFE = False
+    
     # Create a default keyboard configuration, putting in 0 for mouse x and y (handled separately)
     # todo: allow user to supply their own configurations?
     default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
@@ -149,9 +167,8 @@ def main():
     conn = serial.Serial(to_connect_name, 9600, timeout=3)
     if not conn.is_open:
         conn.open()
-
     
-    # create the SerialPacket object
+    # create the SerialPacket object to contain our incoming data
     packet = serial_packet.SerialPacket()
 
     # create an object to store controller data
@@ -165,7 +182,7 @@ def main():
     quit = False
     num_cycles = 0
     while not quit:
-        # read whole objects one at a time -- ensure that we can read the entire object
+        # wait to read until we have enough data in the buffer (the size of one packet)
         if conn.in_waiting >= serial_packet.SerialPacket.size():
             # get the packet
             data = conn.read(serial_packet.SerialPacket.size());
@@ -176,21 +193,19 @@ def main():
                 packet.update(data)
             except Exception as e:
                 # If we encountered a data error, reset our input buffer
-                print("Invalid data (specific error was: ", e, "); resetting input buffer", sep="")
+                print("An error was encountered when trying to data from the adapter; resetting the input buffer")
+                print("The specific error message was:", e)
                 fixed = False
                 while not fixed:
                     # check for a magic number, one byte at a time
-                    # reading one at a time prevents us from being stuck in a loop where weare one byte off
-                    
-                    # todo: this misalignment seems to be happening often...
-                    # # check for a better fix than just handling the error each time
-                    
+                    # reading one at a time prevents us from being stuck in a loop where we are one byte off
                     val = conn.read(1)
                     if val == b'\x23':
                         val = conn.read(1)
                         if val == b'\xC0':
                             print("Data realigned")
                             fixed = True
+                            # Ignore the rest of the data in the block and start fresh with the next one
                             val = conn.read(serial_packet.SerialPacket.size() - serial_packet.SerialPacket.magic_number_size())
             
             # perform our updates
