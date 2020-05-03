@@ -168,8 +168,9 @@ def main():
     # create an object to store controller data
     pressed_buttons = serial_packet.Buttons()
 
-    # Reset the input buffer
-    conn.reset_input_buffer();
+    # Reset the serial buffers
+    conn.reset_input_buffer()
+    conn.reset_output_buffer()
     print("Connected.")
 
     # Our main loop
@@ -183,7 +184,7 @@ def main():
     while not quit:
         # set up keyboard and mouse threads
         kbd_thread = threading.Thread(target=update_keys, args=(pressed_buttons, packet.buttons, default_config))
-        mouse_thread = threading.Thread(target=update_mouse, args=(packet.buttons))
+        mouse_thread = threading.Thread(target=update_mouse, args=([list(packet.buttons)]))
 
         # wait to read until we have enough data in the buffer (the size of one packet)
         if conn.in_waiting >= serial_packet.SerialPacket.size():
@@ -197,9 +198,13 @@ def main():
                 if enabled and (packet.buttons.l and packet.buttons.r and packet.buttons.z and packet.buttons.d_down):
                     enabled = False
                     print("Disabling")
+                    # send a byte to the arduino (to control LED)
+                    conn.write(b'd')
                 elif (not enabled) and packet.buttons.start:
                     enabled = True
                     print("Enabling")
+                    # send a byte to the arduino (to control LED)
+                    conn.write(b'r')
             except Exception as e:
                 # If we encountered a data error, reset our input buffer
                 print("An error was encountered when trying to data from the adapter; resetting the input buffer")

@@ -54,6 +54,11 @@ void setup() {
   Serial.begin(9600);
   c.begin();
 
+  // flush the serial input buffer (just in case)
+  while (Serial.available()) {
+    Serial.read();
+  }
+
   // now that we are done, disable the 'wait' LED and mark the unit as ready
   digitalWrite(WAIT_PIN, LOW);
   digitalWrite(READY_PIN, HIGH);
@@ -80,6 +85,21 @@ void loop() {
         Serial.write(0);
       }
       digitalWrite(WAIT_PIN, LOW);
+    }
+  }
+
+  // now, check to see if the controller sent any data -- if so, handle it, if we can
+  if (Serial.available()) {
+    // if the controller was disabled, it will send 'd'
+    char c = Serial.read();
+    if (c == 'd') {
+      digitalWrite(READY_PIN, LOW);
+      digitalWrite(WAIT_PIN, HIGH);
+    }
+    // if it was re-enabled, it will send 'r'
+    else if (c == 'r') {
+      digitalWrite(WAIT_PIN, LOW);
+      digitalWrite(READY_PIN, HIGH);
     }
   }
 }
