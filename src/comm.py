@@ -18,7 +18,7 @@ import threading
 
 # win32 input modules
 import pydirectinput
-import win32api, win32con
+import win32api, win32con   # included in pypiwin32
 
 # custom modules
 import serial_packet
