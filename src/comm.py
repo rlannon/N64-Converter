@@ -91,9 +91,13 @@ def update_mouse(incoming):
     """ Updates the mouse based on the current joystick position, assuming the mouse input is to be buffered on Project64
     
         :param incoming:
-            The incoming data we are handling
+            The incoming data we are handling (a Buttons object)
     """
 
+    # cast to list type
+    incoming = list(incoming)
+
+    # get the joystick positions
     new_x_coord = incoming[7]
     new_y_coord = incoming[8]
 
@@ -134,26 +138,27 @@ def main():
     # todo: allow user to supply their own configurations?
     default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
 
+    # todo: if an Arduino isn't found, continue polling until we find it
+
     # we must first connect to the Arduino via serial
     # view which connections are available
     all_ports = serial_ports()
-
     listed_ports = list(serial.tools.list_ports.comports())
+    
+    # now, get one with an arduino connected to it
     arduino_port = ""
-
     for port in listed_ports:
         if "Arduino" in port.__str__():
             arduino_port = port.__str__()
             break
-
     if arduino_port == "":
         raise Exception("No Arduino detected")
 
+    # get the actual name of the port (such as 'COM5' or 'COM7') that the OS expects
     to_connect_name = ""
     for port in all_ports:
         if port in arduino_port:
             to_connect_name = port
-
     if to_connect_name == "":
         raise Exception("Could not find port")
 
@@ -172,19 +177,23 @@ def main():
     conn.reset_input_buffer()
     conn.reset_output_buffer()
     print("Connected.")
-
-    # Our main loop
-    quit = False
-
+    
     # allow us to enable and disable the controller from updating with key combos
     # for now, make it L+R+Z+D_DOWN, as that's a very unusual/uncomfortable position
     # and make the re-enable the start button
     enabled = True
     
+    # utilize a sentinel variable for the main loop
+    quit = False
+
+    # our main program loop -- this will process the arduino's serial data and drive the kbd/mouse
     while not quit:
         # set up keyboard and mouse threads
+        # in order to allow combo joystick and button actions, they must be driven simultaneously
         kbd_thread = threading.Thread(target=update_keys, args=(pressed_buttons, packet.buttons, default_config))
-        mouse_thread = threading.Thread(target=update_mouse, args=([list(packet.buttons)]))
+        mouse_thread = threading.Thread(target=update_mouse, args=([packet.buttons]))   # note that since we have a list argument, we must encapsulate it with [] to avoid an error from 'threading'
+        # note: absolute mouse position is also supported in some emulators, but this can be incredibly finnicky
+        # # as such, I'm not touching it here (and threads will have to do!)
 
         # wait to read until we have enough data in the buffer (the size of one packet)
         if conn.in_waiting >= serial_packet.SerialPacket.size():
@@ -197,12 +206,10 @@ def main():
                 packet.update(data)
                 if enabled and (packet.buttons.l and packet.buttons.r and packet.buttons.z and packet.buttons.d_down):
                     enabled = False
-                    print("Disabling")
                     # send a byte to the arduino (to control LED)
                     conn.write(b'd')
                 elif (not enabled) and packet.buttons.start:
                     enabled = True
-                    print("Enabling")
                     # send a byte to the arduino (to control LED)
                     conn.write(b'r')
             except Exception as e:
@@ -224,7 +231,7 @@ def main():
             
             # perform our updates
             try:
-                # only perform updates if the controller is enabled
+                # only perform updates if the controller is enabled -- else, ignore the events
                 if enabled:
                     # update the keystrokes and current button data
                     # update_keys(pressed_buttons, packet.buttons, default_config)
