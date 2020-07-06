@@ -10,7 +10,7 @@ This project is designed for the Arduino Uno, but should work on (or be easily a
 
 ## Getting Started
 
-This project utilizes the Arduino to interpret the N64 controller signals and Python to convert those signals into actual key presses and mouse movement on the host computer. This project currently only works on Windows (tested on Project64) and is currently being adapted to allow use within Linux (tested on Mupen64Plus). Simply connect the controller, along with the signal LEDs, to the Arduino as specified below, and connect to the host via a USB cable. When the Python script starts, it will automatically search for the Arduino and establish a serial connection, so the Arduino should be connected before the Python script is run.
+This project utilizes the Arduino to interpret the N64 controller signals and Python to convert those signals into actual key presses and mouse movement on the host computer. This project currently only works on Windows (tested on Project64) and is currently being adapted to allow use within Linux (tested on Mupen64Plus). Simply connect the controller, along with the signal LEDs, to the Arduino as specified below, and connect to the host via a USB cable. When the Python script starts, it will automatically search for the Arduino and establish a serial connection.
 
 ### Device Driver
 
@@ -44,9 +44,9 @@ To use, simply:
 * Upload the `.ino` file to your Arduino
 * Connect the controller and LEDs to the board as described
 * Connect the Arduino to your computer via USB
-* Run the Python script `comm.py`
+* Run the Python script `n64.py`
 
-Everything in the Python script should happen automatically; it will try to find and connect to the Arduino and establish a serial connection, fixing any issues it can as they arise.
+Everything in the Python script should happen automatically; it will try to find and connect to the Arduino and establish a serial connection, fixing any issues it can as they arise. While the Arduino may be connected to the computer after the script is run, this doesn't always work and so you may have to try executing the script again once the Arduino is plugged in.
 
 Currently, establishing a serial connection with the Arduino requires either the board information to be reported by `pyserial` (works on windows systems when connecting to the COM ports) or for the board's VID:PID to be known. A more general fix is being worked out to get the device information from the Linux OS, though the fix for the time being is to simply require the board model and use a dictionary. This also filters out unsupported board types, though I have only tested on the Uno so I can't know for sure which boards would work for this.
 
