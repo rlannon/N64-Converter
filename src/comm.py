@@ -22,16 +22,19 @@ update_mouse = None
 
 # Check to see the current platform; if we are on windows, load the windows module
 # We also need to initialize our functions
-if sys.platform == "Windows":
+supported = True
+if sys.platform == "win32":
     import win_functions
 
     update_keys = win_functions.update_keys
     update_mouse = win_functions.update_mouse
-else:
+elif sys.platform.startswith('linux'):
     import linux_functions
 
     update_keys = linux_functions.update_keys
     update_mouse = linux_functions.update_mouse
+else:
+    supported = False
 
 # custom modules
 import serial_packet
@@ -187,7 +190,10 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print("Error:", e)
+    if supported:
+        try:
+            main()
+        except Exception as e:
+            print("Error:", e)
+    else:
+        print("Err: This platform is not supported")
