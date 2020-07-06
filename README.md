@@ -50,15 +50,20 @@ Everything in the Python script should happen automatically; it will try to find
 
 Currently, establishing a serial connection with the Arduino requires either the board information to be reported by `pyserial` (works on windows systems when connecting to the COM ports) or for the board's VID:PID to be known. A more general fix is being worked out to get the device information from the Linux OS, though the fix for the time being is to simply require the board model and use a dictionary. This also filters out unsupported board types, though I have only tested on the Uno so I can't know for sure which boards would work for this.
 
+### Command-Line Arguments
+
+The program accepts the following command line arguments:
+
+* `-b` or `--board` - the board model; required
+* `-c-` or `--config` - path to configuration file; if not specified, uses the default for the system (specified in `comm.py`)
+
+### Disabling the Controller
+
 If the inputs `L + R + Z + D_DOWN + C_DOWN` are detected, the Python script will not drive the mouse and keyboard, effectively disabling the controller. Once it detects a start button press, the controller will be re-enabled. The script will also send `'d'` to the Arduino over serial when disabled, and `'r'` when re-enabled so that the Arduino can change the LEDs.
 
-The program will, in the future, allow the emulator and configuration schemes to be specified. For now, however, keep in mind:
+### Quitting
 
-* On Mupen64Plus, it is recommended that you use a mouse scaling factor of 1.0/1.0 for best results
-* On Project64, absolute position should be specified as the script can't establish a base position with the relative option
-* This has only been tested with an Arduino Uno on the following systems/emulators:
-  * Windows 10 with Project64
-  * Ubuntu 18 wth Mupen64Plus
+Like many other command-line programs, use `^C` to exit.
 
 ## Known Issues
 
@@ -66,3 +71,13 @@ This project is far from perfect. While communicating with the host using serial
 
 * The Arduino library does not currently wait to finish initialization until an N64 controller is connected; if none is plugged in to start, there is no guarantee it will work and a reset is required
 * Due to the way the joystick controls the mouse, slight fluttering can occur when moving the stick slowly
+
+### Recommendations and Notes
+
+While not issues _per se,_ you should keep the following in mind:
+
+* On Mupen64Plus, it is recommended that you use a mouse scaling factor of 1.0/1.0 for best results
+* On Project64, absolute position should be specified as the script can't establish a base position with the relative option
+* This has only been tested with an Arduino Uno on the following systems/emulators:
+  * Windows 10 with Project64
+  * Ubuntu 18 wth Mupen64Plus

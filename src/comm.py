@@ -231,12 +231,14 @@ if __name__ == "__main__":
         # parse CL arguments
         parser = argparse.ArgumentParser()
         parser.add_argument(
+            '-c',
             '--config',
             type=str,
             help="The path to the config file you wish to use",
             default=""
         )
         parser.add_argument(
+            '-b',
             '--board',
             type=str,
             help="The Arduino board model",
