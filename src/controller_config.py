@@ -4,6 +4,8 @@
 import sys
 import json
 
+# The pydirectinput module uses different names for special keys; use a dictionary to convert them
+# Note this is only necessary if we are on windows -- Linux systems will use keysym
 keysym_to_windows = {
     "Control": "ctrl",
     "Shift": "shift",
@@ -23,6 +25,11 @@ keysym_to_windows = {
 }
 
 class Configuration:
+    """ Creates an object to store controller configuration
+        Allows an easy way to read in a properly-formatted text file (JSON) and turn it into
+            a file type that the script will understand
+    """
+
     def __init__(self, path):
         """ Initializes the object using a configuration file, a text file containing JSON
 
