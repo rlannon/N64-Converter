@@ -1,6 +1,8 @@
 # win_functions.py
 # Implementations of the mouse/kbd functions for Windows
 
+import mouse_pos
+
 # win32 input modules
 import pydirectinput
 import win32api, win32con   # included in pypiwin32
@@ -58,27 +60,8 @@ def update_mouse(incoming):
     new_x_coord = incoming[7]
     new_y_coord = incoming[8]
 
-    # if the joystick returned to its default position (0,0), stop mouse movement
-    if new_x_coord == 0 and new_y_coord == 0:
-        pass
-    else:
-        y_change = 0
-        x_change = 0
-
-        if new_x_coord == 0:
-            x_change = 0
-        else:
-            x_change = new_x_coord / 2
-            if x_change == 0 and new_x_coord != 0:
-                x_change = 1 if new_x_coord > 0 else -1
-
-        if new_y_coord == 0:
-            y_change = 0
-        else:
-            y_change = new_y_coord / 2
-            if y_change == 0 and new_y_coord != 0:
-                y_change = 1 if new_y_coord > 0 else -1
-            y_change = -y_change
+    # get the position
+    tup = mouse_pos.get_mouse_pos(new_x_coord, new_y_coord)
         
-        # use the win32api to move the mouse position with a direct input event
-        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, int(x_change), int(y_change))
+    # use the win32api to move the mouse position with a direct input event
+    win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, tup[0], tup[1])
