@@ -36,6 +36,9 @@ elif sys.platform.startswith('linux'):
 else:
     supported = False
 
+# todo: the windows and linux modules can actually be condensed because the only difference
+## between them is the drive functtion
+
 # custom modules
 import serial_packet
 
@@ -91,6 +94,8 @@ def main():
             break
     if arduino_port == "":
         raise Exception("No Arduino detected")
+    else:
+        print("Found Arduino:",arduino_port)
 
     # get the actual name of the port (such as 'COM5' or 'COM7') that the OS expects
     to_connect_name = ""
@@ -99,6 +104,8 @@ def main():
             to_connect_name = port
     if to_connect_name == "":
         raise Exception("Could not find port")
+    else:
+        print("Connected on port",to_connect_name)
 
     # connect to the serial port
     conn = serial.Serial(to_connect_name, 9600, timeout=3)
@@ -117,7 +124,7 @@ def main():
     print("Connected.")
     
     # allow us to enable and disable the controller from updating with key combos
-    # for now, make it L+R+Z+D_DOWN, as that's a very unusual/uncomfortable position
+    # for now, make it L+R+Z+D_DOWN+C_DOWN, as that's a very unusual/uncomfortable position
     # and make the re-enable the start button
     enabled = True
     
@@ -142,7 +149,7 @@ def main():
             try:
                 # print(data)   # for debugging
                 packet.update(data)
-                if enabled and (packet.buttons.l and packet.buttons.r and packet.buttons.z and packet.buttons.d_down):
+                if enabled and (packet.buttons.l and packet.buttons.r and packet.buttons.z and packet.buttons.d_down and packet.buttons.c_down):
                     enabled = False
                     # send a byte to the arduino (to control LED)
                     conn.write(b'd')
