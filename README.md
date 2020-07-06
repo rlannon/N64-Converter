@@ -65,14 +65,7 @@ If the inputs `L + R + Z + D_DOWN + C_DOWN` are detected, the Python script will
 
 Like many other command-line programs, use `^C` to exit.
 
-## Known Issues
-
-This project is far from perfect. While communicating with the host using serial might not necessarily be the *optimal* way to do things, it is the only way possible on the Arduino Uno (as it can't really act as an HID-compliant device, unless I'm mistaken -- in which case, let me know, please!). Some known issues at the time are:
-
-* The Arduino library does not currently wait to finish initialization until an N64 controller is connected; if none is plugged in to start, there is no guarantee it will work and a reset is required
-* Due to the way the joystick controls the mouse, slight fluttering can occur when moving the stick slowly
-
-### Recommendations and Notes
+## Recommendations and Notes
 
 While not issues _per se,_ you should keep the following in mind:
 
