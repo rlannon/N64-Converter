@@ -28,7 +28,7 @@ Currently, the Windows version relies on the Win32API and [`pydirectinput`](http
 
 ### Wiring
 
-The N64 controller must be connected to the Arduino via +3.3V (**not** 5V, as this may fry the controller board), GND, and digital pin 2 (this may be modified in the code, I just chose pin 2). The wiring to the controller looks like this (looking at the plug head on, with the flat side on bottom and 'Nintendo' facing up):
+The N64 controller must be connected to the Arduino via +3.3V (**not** 5V, as this may fry the controller board), GND, and digital pin 2 (this may be modified in the code, I just chose pin 2). The wiring to the controller looks like this (looking at the plug head on, with the flat side on bottom and logo facing up):
 
       /------------\
      / O    O     O \
@@ -47,6 +47,8 @@ To use, simply:
 * Run the Python script `comm.py`
 
 Everything in the Python script should happen automatically; it will try to find and connect to the Arduino and establish a serial connection, fixing any issues it can as they arise.
+
+Currently, establishing a serial connection with the Arduino requires either the board information to be reported by `pyserial` (works on windows systems when connecting to the COM ports) or for the board's VID:PID to be known. A more general fix is being worked out to get the device information from the Linux OS, though the fix for the time being is to simply require the board model and use a dictionary. This also filters out unsupported board types, though I have only tested on the Uno so I can't know for sure which boards would work for this.
 
 If the inputs `L + R + Z + D_DOWN + C_DOWN` are detected, the Python script will not drive the mouse and keyboard, effectively disabling the controller. Once it detects a start button press, the controller will be re-enabled. The script will also send `'d'` to the Arduino over serial when disabled, and `'r'` when re-enabled so that the Arduino can change the LEDs.
 
