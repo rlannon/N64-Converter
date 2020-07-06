@@ -14,13 +14,11 @@ This project utilizes the Arduino to interpret the N64 controller signals and Py
 
 ### Device Driver
 
-The controller for the N64 operates in quite a complicated fashion, and requires very specific timings in order to allow communication to be possible. Unfortunately, these timings must be so precise that even C is too slow. As such, we need a driver written (at least mostly) in assembly. Luckily, someone has already done that for us. In order for the Arduino program to work, you will need to include [this library by pothos](https://github.com/pothos/arduino-n64-controller-library). A future version of this project may utilize a custom, reworked device driver, but for the time being, pothos' will suffice.
+The controller for the N64 operates in quite a complicated fashion, and requires very specific timings in order to allow communication to be possible. Unfortunately, these timings must be so precise that even C is too slow (or inaccurate). As such, we need a driver written (at least mostly) in assembly. Luckily, someone has already done that for us. In order for the Arduino program to work, you will need to include [this library by pothos](https://github.com/pothos/arduino-n64-controller-library). A future version of this project may utilize a custom, reworked device driver, but for the time being, pothos' will suffice.
 
 ### Communication with host
 
 The Arduino Uno doesn't offer much by way of communication with the host computer. However, it does allow for serial communication when plugged in with a USB, which is exactly how this library communicates with the included python scripts. The port will be automatically selected based on whichever port the Arduino is plugged into.
-
-If the inputs `L + R + Z + D_DOWN + C_DOWN` are detected, the Python script will not drive the mouse and keyboard, effectively disabling the controller. Once it detects a start button press, the controller will be re-enabled. The script will also send `'d'` to the Arduino over serial when disabled, and `'r'` when re-enabled so that the Arduino can change the LEDs.
 
 ### Keyboard Controller
 
@@ -38,6 +36,27 @@ The N64 controller must be connected to the Arduino via +3.3V (**not** 5V, as th
     |________________|
 
 The included code for the Arduino also drives a few LEDs to indicate various status information. These LEDs, the `WAIT_PIN` and the `READY_PIN`, are by default wired to pins 4 and 7, respectively, but this can be changed in the code by altering the appropriate macros.
+
+## Using the Converter
+
+To use, simply:
+
+* Upload the `.ino` file to your Arduino
+* Connect the controller and LEDs to the board as described
+* Connect the Arduino to your computer via USB
+* Run the Python script `comm.py`
+
+Everything in the Python script should happen automatically; it will try to find and connect to the Arduino and establish a serial connection, fixing any issues it can as they arise.
+
+If the inputs `L + R + Z + D_DOWN + C_DOWN` are detected, the Python script will not drive the mouse and keyboard, effectively disabling the controller. Once it detects a start button press, the controller will be re-enabled. The script will also send `'d'` to the Arduino over serial when disabled, and `'r'` when re-enabled so that the Arduino can change the LEDs.
+
+The program will, in the future, allow the emulator and configuration schemes to be specified. For now, however, keep in mind:
+
+* On Mupen64Plus, it is recommended that you use a mouse scaling factor of 1.0/1.0 for best results
+* On Project64, absolute position should be specified as the script can't establish a base position with the relative option
+* This has only been tested with an Arduino Uno on the following systems/emulators:
+  * Windows 10 with Project64
+  * Ubuntu 18 wth Mupen64Plus
 
 ## Known Issues
 

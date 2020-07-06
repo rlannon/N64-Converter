@@ -20,6 +20,9 @@ import threading
 update_keys = None
 update_mouse = None
 
+# Create a default keyboard configuration, putting in 0 for mouse x and y (handled separately)
+default_config = []
+
 # Check to see the current platform; if we are on windows, load the windows module
 # We also need to initialize our functions
 supported = True
@@ -28,11 +31,17 @@ if sys.platform == "win32":
 
     update_keys = win_functions.update_keys
     update_mouse = win_functions.update_mouse
+
+    # Give our custom Project64 config
+    default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
 elif sys.platform.startswith('linux'):
     import linux_functions
 
     update_keys = linux_functions.update_keys
     update_mouse = linux_functions.update_mouse
+
+    # Give defaults for Mupen64Plus
+    default_config = ['x','c','z','w','s','a','d',0,0,'Shift_L','Control_L','i','k','j','l','Return']
 else:
     supported = False
 
@@ -75,10 +84,6 @@ def main():
     """ The main function, containing the actual driver loop
     """
 
-    # Create a default keyboard configuration, putting in 0 for mouse x and y (handled separately)
-    # todo: allow user to supply their own configurations?
-    default_config = ['q','w','e','r','t','y','u',0,0,'i','o','a','s','d','f','g']
-
     # todo: if an Arduino isn't found, continue polling until we find it
 
     # we must first connect to the Arduino via serial
@@ -89,7 +94,12 @@ def main():
     # now, get one with an arduino connected to it
     arduino_port = ""
     for port in listed_ports:
+        # Windows systems will report the arduino connected to the port,
         if "Arduino" in port.__str__():
+            arduino_port = port.__str__()
+            break
+        # But on Linux systems, we may have to look for the Uno's VID:PID
+        elif "VID:PID=2341:0043" in port.hwid:
             arduino_port = port.__str__()
             break
     if arduino_port == "":

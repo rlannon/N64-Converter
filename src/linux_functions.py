@@ -59,6 +59,6 @@ def update_mouse(incoming):
     tup = mouse_pos.get_mouse_pos(new_x_coord, new_y_coord)
     
     # drive the mouse
-    subprocess.call(["xdotool", "mousemove_relative", tup[0].__str__(), tup[1].__str__()])
+    subprocess.call(["xdotool", "mousemove_relative", "--", tup[0].__str__(), tup[1].__str__()])
 
     return

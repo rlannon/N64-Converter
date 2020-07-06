@@ -10,14 +10,12 @@ def get_mouse_pos(new_x_coord, new_y_coord):
         :param new_y_coord:
             The new y coordinate as reported by the controller
     """
+
+    x_change = 0
+    y_change = 0
     
     # if the joystick returned to its default position (0,0), stop mouse movement
-    if new_x_coord == 0 and new_y_coord == 0:
-        pass
-    else:
-        y_change = 0
-        x_change = 0
-
+    if not (new_x_coord == 0 and new_y_coord == 0):
         if new_x_coord == 0:
             x_change = 0
         else:
