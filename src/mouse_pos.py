@@ -31,4 +31,4 @@ def get_mouse_pos(new_x_coord, new_y_coord):
                 y_change = 1 if new_y_coord > 0 else -1
             y_change = -y_change
     
-    return (x_change, y_change)
+    return (int(x_change), int(y_change))
