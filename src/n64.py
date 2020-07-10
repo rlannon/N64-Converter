@@ -55,13 +55,6 @@ if __name__ == "__main__":
             help="The path to the config file you wish to use",
             default=""
         )
-        parser.add_argument(
-            '-b',
-            '--board',
-            type=str,
-            help="The Arduino board model",
-            required=True
-        )
         args = parser.parse_args()
 
         board_id = ""

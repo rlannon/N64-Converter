@@ -54,7 +54,7 @@ Currently, establishing a serial connection with the Arduino requires either the
 
 The program accepts the following command line arguments:
 
-* `-b` or `--board` - the board model; required
+* `-b` or `--board` - the board model, used for the device's VID:PID on Linux systems; default is `uno`, and currently the only (known) supported board
 * `-c-` or `--config` - path to configuration file; if not specified, uses the default for the system (specified in `comm.py`)
 
 ### Disabling the Controller
