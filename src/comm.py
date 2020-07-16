@@ -53,7 +53,7 @@ def serial_ports():
     return result
 
 
-def read_packet(con, packet, enabled):
+def read_packet(con, enabled):
     """ Reads a single packet from the serial connection
 
         :param con:
@@ -169,21 +169,24 @@ def run(config: list, update_keys, update_mouse, board_id: str, use_absolute: bo
     # Reset the serial buffers
     conn.reset_input_buffer()
     conn.reset_output_buffer()
-    print("Ready.")
 
     # Calibrate the controller, if necessary
     base_pos = (0, 0)
     if use_absolute:
+        print("Move the mouse to a good known zero point and hit start")
         calibrated = False
         while not calibrated:
             # Read the packet
-            packet = read_packet(conn, packet, True)[0]
+            packet = read_packet(conn, True)[0]
             if (packet.buttons.start):
                 base_pos = mouse_pos.read_current_mouse_position()
                 print(f"Using {base_pos} as base position")
                 calibrated = True
             continue
     
+    # We are now ready to roll
+    print("Ready.")
+
     # allow us to enable and disable the controller from updating with key combos
     # for now, make it L+R+Z+D_DOWN+C_DOWN, as that's a very unusual/uncomfortable position
     # and make the re-enable the start button
@@ -197,15 +200,13 @@ def run(config: list, update_keys, update_mouse, board_id: str, use_absolute: bo
         try:
             # set up keyboard and mouse threads
             # in order to allow combo joystick and button actions, they must be driven simultaneously
-            kbd_thread = threading.Thread(target=update_keys, args=(pressed_buttons, packet.buttons, config))
-            mouse_thread = threading.Thread(target=update_mouse, args=([packet.buttons, use_absolute, base_pos]))   # note that since we have a list argument, we must encapsulate it with [] to avoid an error from 'threading'
-            # todo: absolute position mouse function
+            mouse_thread = threading.Thread(target=update_mouse, args=(packet.buttons, use_absolute, base_pos))
 
             # wait to read until we have enough data in the buffer (the size of one packet)
             if conn.in_waiting >= serial_packet.SerialPacket.size():
                 # get the packet
                 # data = conn.read(serial_packet.SerialPacket.size());
-                temp = read_packet(conn, packet, enabled)
+                temp = read_packet(conn, enabled)
                 packet = temp[0]
                 enabled = temp[1]
 
@@ -218,11 +219,12 @@ def run(config: list, update_keys, update_mouse, board_id: str, use_absolute: bo
                         # update_mouse_absolute(zero_position, packet.buttons)
                         
                         # start the threads
-                        kbd_thread.start()
+                        #kbd_thread.start()
                         mouse_thread.start()
+                        update_keys(pressed_buttons, packet.buttons, config)
 
                         # wait for the threads to finish
-                        kbd_thread.join()
+                        #kbd_thread.join()
                         mouse_thread.join()
 
                         # update the list of currently pressed buttons

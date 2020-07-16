@@ -55,7 +55,8 @@ def get_absolute_pos(x, y, base):
             A tuple containing the base position
     """
 
-    new_x = base[0] + int(x / 2)
-    new_y = base[1] - int(y / 2)
+    # give a small deadzone
+    new_x = base[0] + (int(x / 2) if abs(x) > 2 else 0)
+    new_y = base[1] - (int(y / 2) if abs(y) > 2 else 0)
 
     return (new_x, new_y)
