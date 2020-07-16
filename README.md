@@ -70,7 +70,7 @@ Like many other command-line programs, use `^C` to exit.
 While not issues _per se,_ you should keep the following in mind:
 
 * On Mupen64Plus, it is recommended that you use a mouse scaling factor of 1.0/1.0 for best results
-* On Project64, absolute position should be specified as the script can't establish a base position with the relative option
+* On Project64, while using the absolute mouse position is possible, it requires calibration and may be finnicky; however, it's more true to the actual N64 than the current solution with buffered input is
 * This has only been tested with an Arduino Uno on the following systems/emulators:
   * Windows 10 with Project64
   * Ubuntu 18 wth Mupen64Plus
