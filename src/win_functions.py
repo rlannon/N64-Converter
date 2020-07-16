@@ -46,7 +46,7 @@ def update_keys(pressed_buttons, packet, config):
         i += 1
 
 
-def update_mouse(incoming):
+def update_mouse(incoming, use_absolute, base_pos):
     """ Updates the mouse based on the current joystick position, assuming the mouse input is to be buffered on Project64
     
         :param incoming:
@@ -60,8 +60,15 @@ def update_mouse(incoming):
     new_x_coord = incoming[7]
     new_y_coord = incoming[8]
 
-    # get the position
-    tup = mouse_pos.get_mouse_pos(new_x_coord, new_y_coord)
-        
+    # act based on the mode
+    tup = base_pos
+    WIN32FLAGS = win32con.MOUSEEVENTF_MOVE
+    if use_absolute:
+        tup = mouse_pos.get_absolute_pos(new_x_coord, new_y_coord, base_pos)
+        WIN32FLAGS += win32con.MOUSEEVENTF_ABSOLUTE
+    else:
+        # get the position
+        tup = mouse_pos.get_mouse_pos(new_x_coord, new_y_coord)
+    
     # use the win32api to move the mouse position with a direct input event
-    win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, tup[0], tup[1])
+    win32api.mouse_event(WIN32FLAGS, tup[0], tup[1], 0)

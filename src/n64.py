@@ -55,6 +55,19 @@ if __name__ == "__main__":
             help="The path to the config file you wish to use",
             default=""
         )
+        parser.add_argument(
+            "-b",
+            "--board",
+            type=str,
+            help="The board model you are using",
+            default="uno"
+        )
+        parser.add_argument(
+            '-a',
+            '--absolute',
+            action='store_true',
+            help='Use the absolute mouse position (optimal performance; requires calibration)'
+        )
         args = parser.parse_args()
 
         board_id = ""
@@ -78,7 +91,7 @@ if __name__ == "__main__":
             config = default_config
 
         try:
-            comm.run(config, update_keys, update_mouse, board_id)
+            comm.run(config, update_keys, update_mouse, board_id, args.absolute)
         except KeyboardInterrupt:
             exit()
         except Exception as e:

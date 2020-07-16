@@ -5,6 +5,7 @@
 import subprocess
 import mouse_pos
 
+
 def update_keys(pressed_buttons, packet, config):
     """ Updates key presses
 
